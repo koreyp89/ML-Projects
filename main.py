@@ -22,6 +22,8 @@ class Bayes_reasoner:
         self.initialize_conditionals()
         self.get_conditionals()
         self.print_conditionals()
+        print("\n")
+        self.test_training_set()
 
     def initialize_conditionals(self):
         for attribute in self.attributes:
@@ -32,15 +34,22 @@ class Bayes_reasoner:
                     self.conditional_probabilities[attribute][j][i] = 0
 
     def argmax_classes(self, example):
+        tie_breaker = self.class_priors[0] if self.class_priors[0] > self.class_priors[1] else self.class_priors[1]
         argmax = 0
         argmax_value = 0
         for x in range(2):
-            summation = math.log(self.class_priors[x], 2)
-            for i in range(self.attributes):
-                summation += math.log(self.conditional_probabilities[self.attributes[i]][example[i]][x])
-            if summation > argmax_value:
+            summation = (-1)*math.log(self.class_priors[x], 10)
+            for i in range(len(self.attributes)):
+                summation += (-1)*math.log(self.conditional_probabilities[self.attributes[i]][example[i]][x], 10)
+            if x == 0:
                 argmax_value = summation
-                argmax = x
+            else:
+                if summation < argmax_value:
+                    argmax_value = summation
+                    argmax = x
+                else:
+                    if summation == argmax_value:
+                        return tie_breaker
         return argmax
 
     def get_conditionals(self):
@@ -80,15 +89,25 @@ class Bayes_reasoner:
         self.class_priors[1] = 0
 
     def print_conditionals(self):
-        print("P(class=0)=" + str(round(self.class_priors[0], 2)), end=' ')
+        print("P(class=0)=" + str.format("{:.2f}", self.class_priors[0]), end=' ')
         for att in self.attributes:
             for i in range(2):
                 print("P(" + att + "=" + str(i) + "|0)=" + str.format("{:.2f}", self.conditional_probabilities[att][i][0]), end=' ')
         print()
-        print("P(class=1)=" + str(round(self.class_priors[1], 2)), end=' ')
+        print("P(class=1)=" + str.format("{:.2f}", self.class_priors[1]), end=' ')
         for att in self.attributes:
             for i in range(2):
                 print("P(" + att + "=" + str(i) + "|1)=" + str.format("{:.2f}", self.conditional_probabilities[att][i][1]), end=' ')
+
+    def test_training_set(self):
+        total_correct = 0
+        for i in range(len(self.training_set[:, -1])):
+            prediction = self.argmax_classes(self.training_set[i , :])
+            total_correct += 1 if prediction == self.training_set[i][len(self.attributes)] else 0
+        accuracy = total_correct/len(self.training_set[:,0])
+        accuracy *= 100
+        print("Accuracy on training set (" + str(len(self.training_set[:, -1])) + " instances): " + str.format("{:.2f}", accuracy) + '%')
+
 
 
 if __name__ == "__main__":
