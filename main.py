@@ -11,10 +11,12 @@ def make_test_set(file_location):
 
 class Bayes_reasoner:
 
-    def __init__(self, training_file_location):
-        self.matrix = make_test_set(training_file_location)
-        self.training_set = self.matrix.values
-        self.attributes = self.matrix.columns[:len(self.matrix.columns)-1]
+    def __init__(self, training_file_location, test_file_location):
+        self.matrix_train = make_test_set(training_file_location)
+        self.matrix_test = make_test_set(test_file_location)
+        self.training_set = self.matrix_train.values
+        self.test_set = self.matrix_test.values
+        self.attributes = self.matrix_train.columns[:len(self.matrix_train.columns)-1]
         self.class_priors = {}
         self.initialize_class_priors()
         self.get_class_priors()
@@ -23,7 +25,11 @@ class Bayes_reasoner:
         self.get_conditionals()
         self.print_conditionals()
         print("\n")
-        self.test_training_set()
+        print("Accuracy on training set (" + str(len(self.training_set[:, -1])) + " instances): " + str.format("{:.2f}",
+                                                                                                   self.test_training_set(self.training_set)) + '%\n')
+        print("Accuracy on training set (" + str(len(self.test_set[:, -1])) + " instances): " + str.format("{:.2f}",
+                                                                                                               self.test_training_set(
+                                                                                                                   self.test_set)) + '%')
 
     def initialize_conditionals(self):
         for attribute in self.attributes:
@@ -99,16 +105,16 @@ class Bayes_reasoner:
             for i in range(2):
                 print("P(" + att + "=" + str(i) + "|1)=" + str.format("{:.2f}", self.conditional_probabilities[att][i][1]), end=' ')
 
-    def test_training_set(self):
+    def test_training_set(self, t_set):
         total_correct = 0
-        for i in range(len(self.training_set[:, -1])):
-            prediction = self.argmax_classes(self.training_set[i , :])
-            total_correct += 1 if prediction == self.training_set[i][len(self.attributes)] else 0
-        accuracy = total_correct/len(self.training_set[:,0])
-        accuracy *= 100
-        print("Accuracy on training set (" + str(len(self.training_set[:, -1])) + " instances): " + str.format("{:.2f}", accuracy) + '%')
+        for i in range(len(t_set[:, -1])):
+            prediction = self.argmax_classes(t_set[i , :])
+            total_correct += 1 if prediction == t_set[i][len(self.attributes)] else 0
+        accuracy = total_correct/len(t_set[:,0])
+        return accuracy * 100
+
 
 
 
 if __name__ == "__main__":
-    Bayes_reasoner(sys.argv[1])
+    Bayes_reasoner(sys.argv[1], sys.argv[2])
